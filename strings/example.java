@@ -1,126 +1,183 @@
 package com.thealgorithms.strings;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
-
 /**
- * An anagram is a word or phrase formed by rearranging the letters of a different word or phrase,
- * typically using all the original letters exactly once.[1]
- * For example, the word anagram itself can be rearranged into nag a ram,
- * also the word binary into brainy and the word adobe into abode.
- * Reference from https://en.wikipedia.org/wiki/Anagram
+ * This class is not thread safe<br>
+ * <br>
+ * (From wikipedia) In computer science, the Boyer–Moore–Horspool algorithm or
+ * Horspool's algorithm is an algorithm for finding substrings in strings. It
+ * was published by Nigel Horspool in 1980.
+ * <br>
+ * <a href=https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore%E2%80%93Horspool_algorithm>Wikipedia
+ * page</a><br>
+ * <br>
+ *
+ * <p>
+ * An explanation:<br>
+ *
+ * <p>
+ * The Horspool algorithm is a simplification of the Boyer-Moore algorithm in
+ * that it uses only one of the two heuristic methods for increasing the number
+ * of characters shifted when finding a bad match in the text. This method is
+ * usually called the "bad symbol" or "bad character" shift. The bad symbol
+ * shift method is classified as an input enhancement method in the theory of
+ * algorithms. Input enhancement is (from wikipedia) the principle that
+ * processing a given input to a problem and altering it in a specific way will
+ * increase runtime efficiency or space efficiency, or both. Both algorithms try
+ * to match the pattern and text comparing the pattern symbols to the text's
+ * from right to left.<br>
+ * <br>
+ *
+ * <p>
+ * In the bad symbol shift method, a table is created prior to the search,
+ * called the "bad symbol table". The bad symbol table contains the shift values
+ * for any symbol in the text and pattern. For these symbols, the value is the
+ * length of the pattern, if the symbol is not in the first (length - 1) of the
+ * pattern. Else it is the distance from its rightmost occurrence in the pattern
+ * to the last symbol of the pattern. In practice, we only calculate the values
+ * for the ones that exist in the first (length - 1) of the pattern.<br>
+ * <br>
+ *
+ * <p>
+ * For more details on the algorithm and the more advanced Boyer-Moore I
+ * recommend checking out the wikipedia page and professor Anany Levitin's book:
+ * Introduction To The Design And Analysis Of Algorithms.
  */
-public class Anagrams {
-    // 4 approaches are provided for anagram checking. approach 2 and approach 3 are similar but differ in running time.
-    public static void main(String[] args) {
-        String first = "deal";
-        String second = "lead";
-        // All the below methods takes input but doesn't return any output to the main method.
-        Anagrams nm = new Anagrams();
-        System.out.println(nm.approach2(first, second));  /* To activate methods for different approaches*/
-        System.out.println(nm.approach1(first, second));  /* To activate methods for different approaches*/
-        System.out.println(nm.approach3(first, second));  /* To activate methods for different approaches*/
-        System.out.println(nm.approach4(first, second));  /* To activate methods for different approaches*/
+public class HorspoolSearch {
 
-        /**
-         * OUTPUT :
-         * first string ="deal" second string ="lead"
-         * Output: Anagram
-         * Input and output is constant for all four approaches
-         * 1st approach Time Complexity : O(n logn)
-         * Auxiliary Space Complexity : O(1)
-         * 2nd approach Time Complexity : O(n)
-         * Auxiliary Space Complexity : O(1)
-         * 3rd approach Time Complexity : O(n)
-         * Auxiliary Space Complexity : O(1)
-         * 4th approach Time Complexity : O(n)
-         * Auxiliary Space Complexity : O(n)
-         */
+    private static HashMap<Character, Integer> shiftValues; // bad symbol table
+    private static Integer patternLength;
+    private static int comparisons = 0; // total comparisons in the current/last search
+
+    /**
+     * Case sensitive version version of the algorithm
+     *
+     * @param pattern the pattern to be searched for (needle)
+     * @param text the text being searched in (haystack)
+     * @return -1 if not found or first index of the pattern in the text
+     */
+    public static int findFirst(String pattern, String text) {
+        return firstOccurrence(pattern, text, true);
     }
 
-    boolean approach1(String s, String t) {
-        if (s.length() != t.length()) {
-            return false;
-        } else {
-            char c[] = s.toCharArray();
-            char d[] = t.toCharArray();
-            Arrays.sort(c);
-            Arrays.sort(d);    /* In this approach the strings are stored in the character arrays and both the arrays are sorted. After that both the arrays are compared for checking anangram */
-            if (Arrays.equals(c, d)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
+    /**
+     * Case insensitive version version of the algorithm
+     *
+     * @param pattern the pattern to be searched for (needle)
+     * @param text the text being searched in (haystack)
+     * @return -1 if not found or first index of the pattern in the text
+     */
+    public static int findFirstInsensitive(String pattern, String text) {
+        return firstOccurrence(pattern, text, false);
     }
 
-    boolean approach2(String a, String b) {
-        if (a.length() != b.length()) {
-            return false;
-        } else {
-            int m[] = new int[26];
-            int n[] = new int[26];
-            for (char c : a.toCharArray()) {
-                m[c - 'a']++;
-            }
-            // In this approach the frequency of both the strings are stored and after that the frequencies are iterated from 0 to 26(from 'a' to 'z' ). If the frequencies match then anagram message is displayed in the form of boolean format
-            // Running time and space complexity of this algo is less as compared to others
-            for (char c : b.toCharArray()) {
-                n[c - 'a']++;
-            }
-            for (int i = 0; i < 26; i++) {
-                if (m[i] != n[i]) {
-                    return false;
+    /**
+     * Utility method that returns comparisons made by last run (mainly for
+     * tests)
+     *
+     * @return number of character comparisons of the last search
+     */
+    public static Integer getLastComparisons() {
+        return HorspoolSearch.comparisons;
+    }
+
+    /**
+     * Fairly standard implementation of the Horspool algorithm. Only the index
+     * of the last character of the pattern on the text is saved and shifted by
+     * the appropriate amount when a mismatch is found. The algorithm stops at
+     * the first match or when the entire text has been exhausted.
+     *
+     * @param pattern String to be matched in the text
+     * @param text text String
+     * @return index of first occurrence of the pattern in the text
+     */
+    private static int firstOccurrence(String pattern, String text, boolean caseSensitive) {
+        shiftValues = calcShiftValues(pattern); // build the bad symbol table
+        comparisons = 0; // reset comparisons
+
+        int textIndex
+                = pattern.length() - 1; // align pattern with text start and get index of the last character
+
+        // while pattern is not out of text bounds
+        while (textIndex < text.length()) {
+
+            // try to match pattern with current part of the text starting from last character
+            int i = pattern.length() - 1;
+            while (i >= 0) {
+                comparisons++;
+                char patternChar = pattern.charAt(i);
+                char textChar = text.charAt((textIndex + i) - (pattern.length() - 1));
+                if (!charEquals(patternChar, textChar, caseSensitive)) { // bad character, shift pattern
+                    textIndex += getShiftValue(text.charAt(textIndex));
+                    break;
                 }
+                i--;
             }
-            return true;
+
+            // check for full match
+            if (i == -1) {
+                return textIndex - pattern.length() + 1;
+            }
         }
+
+        // text exhausted, return failure
+        return -1;
     }
 
-    boolean approach3(String s, String t) {
-        if (s.length() != t.length()) {
-            return false;
+    /**
+     * Compares the argument characters
+     *
+     * @param c1 first character
+     * @param c2 second character
+     * @param caseSensitive boolean determining case sensitivity of comparison
+     * @return truth value of the equality comparison
+     */
+    private static boolean charEquals(char c1, char c2, boolean caseSensitive) {
+        if (caseSensitive) {
+            return c1 == c2;
         }
-        // this is similar to approach number 2 but here the string is not converted to character array
-        else {
-            int a[] = new int[26];
-            int b[] = new int[26];
-            int k = s.length();
-            for (int i = 0; i < k; i++) {
-                a[s.charAt(i) - 'a']++;
-                b[t.charAt(i) - 'a']++;
-            }
-            for (int i = 0; i < 26; i++) {
-                if (a[i] != b[i])
-                    return false;
-            }
-            return true;
-        }
+        return Character.toLowerCase(c1) == Character.toLowerCase(c2);
     }
 
-    boolean approach4(String s, String t) {
-        if (s.length() != t.length()) {
-            return false;
-        }
-        // This approach is done using hashmap where frequencies are stored and checked iteratively and if all the frequencies of first string match with the second string then anagram message is displayed in boolean format
-        else {
-            HashMap<Character, Integer> nm = new HashMap<>();
-            HashMap<Character, Integer> kk = new HashMap<>();
-            for (char c : s.toCharArray()) {
-                nm.put(c, nm.getOrDefault(c, 0) + 1);
-            }
-            for (char c : t.toCharArray()) {
+    /**
+     * Builds the bad symbol table required to run the algorithm. The method
+     * starts from the second to last character of the pattern and moves to the
+     * left. When it meets a new character, it is by definition its rightmost
+     * occurrence and therefore puts the distance from the current index to the
+     * index of the last character into the table. If the character is already
+     * in the table, then it is not a rightmost occurrence, so it continues.
+     *
+     * @param pattern basis for the bad symbol table
+     * @return the bad symbol table
+     */
+    private static HashMap<Character, Integer> calcShiftValues(String pattern) {
+        patternLength = pattern.length();
+        HashMap<Character, Integer> table = new HashMap<>();
 
-                kk.put(c, kk.getOrDefault(c, 0) + 1);
-            }
-            // It checks for equal frequencies
-            for (char c : nm.keySet()) {
-                if (!nm.get(c).equals(kk.get(c))) {
-                    return false;
-                }
-            }
-            return true;
+        for (int i = pattern.length() - 2;
+                i >= 0;
+                i--) { // length - 2 is the index of the second to last character
+            char c = pattern.charAt(i);
+            int finalI = i;
+            table.computeIfAbsent(c, k -> pattern.length() - 1 - finalI);
+        }
+
+        return table;
+    }
+
+    /**
+     * Helper function that uses the bad symbol shift table to return the
+     * appropriate shift value for a given character
+     *
+     * @param c character
+     * @return shift value that corresponds to the character argument
+     */
+    private static Integer getShiftValue(char c) {
+        if (shiftValues.get(c) != null) {
+            return shiftValues.get(c);
+        } else {
+            return patternLength;
         }
     }
 }
