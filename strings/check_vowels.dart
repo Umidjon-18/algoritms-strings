@@ -1,5 +1,7 @@
 void main(List<String> args) {
-  print(countVowels("auemdof"));
+  // print(countVowels("auemdof"));
+  var a = DateTime.now();
+  print(a);
 }
 
 final Set<String> VOWELS = ['a', 'e', 'i', 'o', 'u'].toSet();
@@ -30,4 +32,11 @@ int countVowels(String? input) {
     }
   }
   return cnt;
+}
+
+extension Yangi on DateTime {
+  static const PU = 23;
+  void aaa() {
+    print("aaa");
+  }
 }
