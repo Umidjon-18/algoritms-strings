@@ -17,4 +17,12 @@ extension UpperCase on String {
     }
     return false;
   }
+
+  bool isLowerCase(var element) {
+    int codeIndex = element.codeUnitAt(0);
+    if (codeIndex > 96 && codeIndex < 123) {
+      return true;
+    }
+    return false;
+  }
 }

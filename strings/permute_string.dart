@@ -29,5 +29,5 @@ void generatePermutation(String str, int start, int end) {
       str = swapString(str, start, i);
     }
   }
-    print(str);
+    print(str)
 }
