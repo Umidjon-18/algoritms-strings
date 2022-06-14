@@ -1,5 +1,5 @@
 void main(List<String> args) {
-  print(lengthOfLongestSubstring("qwertywertyqwerty"));
+  print(lengthOfLongestSubstring("qwertyerrwertyqwertyerr"));
 }
 
 int lengthOfLongestSubstring(String s) {
