@@ -1,4 +1,5 @@
 import 'sort_algorithm.dart';
+import 'sort_utils.dart';
 
 void main(List<String> args) {
   MergeSort mergeSort = new MergeSort();
@@ -16,7 +17,7 @@ void main(List<String> args) {
         }
 }
 
-class MergeSort implements SortAlgorithm {
+class MergeSort with SortUtils implements SortAlgorithm {
 
     /**
      * Generic merge sort algorithm implements.
@@ -77,7 +78,7 @@ class MergeSort implements SortAlgorithm {
             temp[k++] = arr[j++];
         }
 
-        System.arraycopy(temp, 0, arr, left, length);
+        arrayCopy(temp, 0, arr, left, length);
     }
 
     

@@ -85,12 +85,20 @@ class SortUtils {
     }
   }
 
-   select<T extends Comparable<T>>(List<T> array, int point) {
+  select<T extends Comparable<T>>(List<T> array, int point) {
     for (var item in array) {
       if (item == point) {
         return item;
       }
     }
     return null;
+  }
+
+  void arrayCopy<T extends Comparable<T>>(
+      List<T> array1, int index, List<T> array2, int destIndex, int length) {
+    var section = array1.sublist(index, index + length);
+    for (var i = 0; i < section.length; i++) {
+      array2[destIndex + i] = section[i];
+    }
   }
 }

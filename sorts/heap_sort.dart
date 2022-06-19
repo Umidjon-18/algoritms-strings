@@ -1,17 +1,16 @@
 import 'sort_algorithm.dart';
+import 'sort_utils.dart';
 
 void main(List<String> args) {
   
 }
 
- class HeapSort implements SortAlgorithm {
-
-    class Heap<T extends Comparable<T>> {
+class Heap<T extends Comparable<T>> with SortUtils{
 
         /**
          * Array to store heap
          */
-         List<T> heap;
+         late List<T> heap;
 
         /**
          * Constructor
@@ -56,11 +55,11 @@ void main(List<String> args) {
          *
          * @param root index of root of heap
          */
-        private void makeMinHeap(int root) {
+        void makeMinHeap(int root) {
             int leftIndex = root * 2 + 1;
             int rightIndex = root * 2 + 2;
-            boolean hasLeftChild = leftIndex < heap.length;
-            boolean hasRightChild = rightIndex < heap.length;
+            bool hasLeftChild = leftIndex < heap.length;
+            bool hasRightChild = rightIndex < heap.length;
             if (hasRightChild) { // if has left and right
                 makeMinHeap(leftIndex);
                 makeMinHeap(rightIndex);
@@ -75,27 +74,30 @@ void main(List<String> args) {
          *
          * @return root of heap
          */
-        private T getRoot(int size) {
+        T getRoot(int size) {
             swap(heap, 0, size);
             heapSubtree(0, size - 1);
             return heap[size]; // return old root
         }
     }
 
-    @Override
-    public <T extends Comparable<T>> T[] sort(T[] unsorted) {
-        return sort(Arrays.asList(unsorted)).toArray(unsorted);
+ class HeapSort implements SortAlgorithm {
+
+    
+
+    @override
+    List<T> sort<T extends Comparable<T>>(List<T> unsorted) {
+        return sort2(Arrays.asList(unsorted)).toArray(unsorted);
     }
 
-    @Override
-    public <T extends Comparable<T>> List<T> sort(List<T> unsorted) {
-        int size = unsorted.size();
+    List<T> sort2<T extends Comparable<T>>(List<T> unsorted) {
+        int size = unsorted.length;
 
         @SuppressWarnings("unchecked")
-        Heap<T> heap = new Heap<>(unsorted.toArray((T[]) new Comparable[unsorted.size()]));
+        Heap<T> heap = Heap(unsorted.toList);
 
         heap.makeMinHeap(0); // make min heap using index 0 as root.
-        List<T> sorted = new ArrayList<>(size);
+        List<T> sorted = [];
         while (size > 0) {
             T min = heap.getRoot(--size);
             sorted.add(min);
@@ -104,14 +106,5 @@ void main(List<String> args) {
         return sorted;
     }
 
-    /**
-     * Main method
-     *
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        Integer[] heap = {4, 23, 6, 78, 1, 54, 231, 9, 12};
-        HeapSort heapSort = new HeapSort();
-        print(heapSort.sort(heap));
-    }
+    
 }

@@ -3,17 +3,14 @@ import 'dart:math';
 import 'search_algorithm.dart';
 
 void main(List<String> args) {
-
   List<int> integers = [2, 4, 67, 5, 3, 1, 8, 9, 0, 56, 78, 43, 12];
 
   // The element that should be found
-  int shouldBeFound = 5;
+  int shouldBeFound = integers[Random.secure().nextInt(integers.length - 1)];
 
   BinarySearch search = new BinarySearch();
   int? atIndex = search.find<num>(integers, shouldBeFound);
-
   print("Should be found: $shouldBeFound. Found ${integers[atIndex!]} at index $atIndex.");
-
 }
 
 class BinarySearch implements SearchAlgorithm {

@@ -20,3 +20,8 @@ String reverse2(String str) {
   }
   return value.join();
 }
+
+
+class MyExep implements Exception {
+  
+}
